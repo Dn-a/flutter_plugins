@@ -84,6 +84,16 @@
       [self registerJavaScriptChannels:_javaScriptChannelNames controller:userContentController];
     }
 
+    //SUCA
+    /*NSString *source = @"var meta = document.createElement('meta'); \
+        meta.name = 'viewport'; \
+        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
+        var head = document.getElementsByTagName('head')[0];\
+        head.appendChild(meta);";
+    WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:YES];
+    [userContentController addUserScript:script];*/
+
+
     NSDictionary<NSString*, id>* settings = args[@"settings"];
 
     WKWebViewConfiguration* configuration = [[WKWebViewConfiguration alloc] init];
@@ -332,7 +342,11 @@
     } else if ([key isEqualToString:@"userAgent"]) {
       NSString* userAgent = settings[key];
       [self updateUserAgent:[userAgent isEqual:[NSNull null]] ? nil : userAgent];
-    } else {
+    } else if ([key isEqualToString:@"zoomEnabled"]) {
+      NSNumber* zoomEnabled = settings[key];
+      [self updateZoomEnabled:zoomEnabled];
+    }
+    else {
       [unknownKeys addObject:key];
     }
   }
@@ -435,6 +449,17 @@
   } else {
     NSLog(@"Updating UserAgent is not supported for Flutter WebViews prior to iOS 9.");
   }
+}
+
+- (void)updateZoomEnabled:(NSNumber*)zoomEnabled {
+  BOOL enabled = [zoomEnabled boolValue];
+  NSLog(enabled ? @"Yes" : @"No");
+  NSString *source = @"var meta = document.createElement('meta'); \
+          meta.name = 'viewport'; \
+          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
+          var head = document.getElementsByTagName('head')[0];\
+          head.appendChild(meta);";
+  WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:YES];
 }
 
 #pragma mark WKUIDelegate

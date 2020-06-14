@@ -51,7 +51,7 @@ class _WebViewExampleState extends State<WebViewExample> {
       body: Builder(builder: (BuildContext context) {
         return WebView(
           initialUrl: 'https://flutter.dev',
-          zoomEnabled: true,
+          zoomEnabled: false,
           javascriptMode: JavascriptMode.unrestricted,
           onWebViewCreated: (WebViewController webViewController) {
             _controller.complete(webViewController);
