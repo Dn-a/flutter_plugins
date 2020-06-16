@@ -358,6 +358,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   }
 
   private void updateZoomMode(boolean mode) {
+    if(!mode) return;
     // loads the WebView completely zoomed out
     webView.getSettings().setLoadWithOverviewMode(true);
 
@@ -367,7 +368,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
     // Pop-up zoom controls disabled. This is a temporary stop because dialog is not responding to touch events.
     webView.getSettings().setDisplayZoomControls(false);
-    webView.getSettings().setBuiltInZoomControls(mode);
+
+    // enable zoom
+    webView.getSettings().setBuiltInZoomControls(true);
   }
 
   @Override
