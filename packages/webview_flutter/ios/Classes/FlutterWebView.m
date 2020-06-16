@@ -84,16 +84,6 @@
       [self registerJavaScriptChannels:_javaScriptChannelNames controller:userContentController];
     }
 
-    //SUCA
-    /*NSString *source = @"var meta = document.createElement('meta'); \
-        meta.name = 'viewport'; \
-        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
-        var head = document.getElementsByTagName('head')[0];\
-        head.appendChild(meta);";
-    WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:YES];
-    [userContentController addUserScript:script];*/
-
-
     NSDictionary<NSString*, id>* settings = args[@"settings"];
 
     WKWebViewConfiguration* configuration = [[WKWebViewConfiguration alloc] init];
@@ -453,13 +443,18 @@
 
 - (void)updateZoomEnabled:(NSNumber*)zoomEnabled {
   BOOL enabled = [zoomEnabled boolValue];
-  NSLog(enabled ? @"Yes" : @"No");
-  NSString *source = @"var meta = document.createElement('meta'); \
-          meta.name = 'viewport'; \
-          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
-          var head = document.getElementsByTagName('head')[0];\
-          head.appendChild(meta);";
-  WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:YES];
+  if(enabled){
+      _navigationDelegate.didFinishLoad = ^(WKNavigation *view) {
+        NSString *source = @"var meta = document.createElement('meta'); \
+              meta.name = 'viewport'; \
+              meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
+              var head = document.getElementsByTagName('head')[0];\
+              head.appendChild(meta);";
+        [_webView evaluateJavaScript:source completionHandler:nil];
+      };
+  }
+  else
+    _navigationDelegate.didFinishLoad = ^(WKNavigation *view) {};
 }
 
 #pragma mark WKUIDelegate

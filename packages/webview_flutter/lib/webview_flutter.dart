@@ -154,7 +154,7 @@ class WebView extends StatefulWidget {
     this.debuggingEnabled = false,
     this.gestureNavigationEnabled = false,
     this.userAgent,
-    this.zoomEnabled = false,
+    this.zoomEnabled = true,
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
   })  : assert(javascriptMode != null),
@@ -325,14 +325,19 @@ class WebView extends StatefulWidget {
   /// Controls whether WebView zoom is enabled.
   ///
   /// Android:
-  ///  - WebView completely zoomed out is enabled by default
-  ///  - By default the WebView checks if there are attributes defined in the meta tag of the web page.
-  ///    This allows you to resize the web page as defined in the html
+  ///  - Fully zoomed WebView is enabled by default
+  ///  - By default, WebView checks if there are attributes defined in the meta tag of the web page.
+  ///    This allows you to resize the web page as defined in the html tag
   ///  - Pop-up zoom controls disabled. This is a temporary stop because dialog is not responding to touch events
   ///
   /// iOS:
+  /// Removing viewForZooming in the UIScrollViewDelegate method disables the pinch to zoom in,
+  /// but not the double tap that keeps changing the zoom level.
+  /// The best solution was to inject JavaScript that adds this meta-tag:
+  /// <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  /// It works independently of the WKWebView configuration.
   ///
-  /// By default `zoomEnabled` is false.
+  /// By default `zoomEnabled` is true.
   final bool zoomEnabled;
 
   /// Which restrictions apply on automatic media playback.
