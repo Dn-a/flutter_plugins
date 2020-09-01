@@ -124,11 +124,11 @@ public class Camera {
     ResolutionPreset preset = ResolutionPreset.valueOf(resolutionPreset);
     recordingProfile =
         CameraUtils.getBestAvailableCamcorderProfileForResolutionPreset(cameraName, preset);
-    Size largest = Collections.max(Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
+    //Size largest = Collections.max(Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
 
-    if(preset==ResolutionPreset.max)
+    /*if(preset==ResolutionPreset.max)
       captureSize = new Size(largest.getWidth(), largest.getHeight());
-    else
+    else*/
       captureSize = new Size(recordingProfile.videoFrameWidth, recordingProfile.videoFrameHeight);
 
     previewSize = computeBestPreviewSize(cameraName, preset);
@@ -164,9 +164,7 @@ public class Camera {
             captureSize.getWidth(), captureSize.getHeight(), ImageFormat.JPEG, 2);
 
     // Used to steam image byte data to dart side.
-    imageStreamReader =
-        ImageReader.newInstance(
-            previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+    imageStreamReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
 
     cameraManager.openCamera(
         cameraName,

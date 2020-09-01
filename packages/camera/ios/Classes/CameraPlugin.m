@@ -19,11 +19,6 @@ static FlutterError *getFlutterError(NSError *error) {
 @property(readonly, nonatomic) FlutterResult result;
 @property(readonly, nonatomic) CMMotionManager *motionManager;
 @property(readonly, nonatomic) AVCaptureDevicePosition cameraPosition;
-
-- initWithPath:(NSString *)filename
-            result:(FlutterResult)result
-     motionManager:(CMMotionManager *)motionManager
-    cameraPosition:(AVCaptureDevicePosition)cameraPosition;
 @end
 
 @interface FLTImageStreamHandler : NSObject <FlutterStreamHandler>
@@ -68,7 +63,7 @@ static FlutterError *getFlutterError(NSError *error) {
                 previewPhotoSampleBuffer:(CMSampleBufferRef)previewPhotoSampleBuffer
                         resolvedSettings:(AVCaptureResolvedPhotoSettings *)resolvedSettings
                          bracketSettings:(AVCaptureBracketedStillImageSettings *)bracketSettings
-                                   error:(NSError *)error {
+                                   error:(NSError *)error API_AVAILABLE(ios(10)) {
   selfReference = nil;
   if (error) {
     _result(getFlutterError(error));
@@ -160,14 +155,14 @@ static ResolutionPreset getResolutionPresetForString(NSString *preset) {
                               AVCaptureAudioDataOutputSampleBufferDelegate,
                               FlutterStreamHandler>
 @property(readonly, nonatomic) int64_t textureId;
-@property(nonatomic, copy) void (^onFrameAvailable)();
+@property(nonatomic, copy) void (^onFrameAvailable)(void);
 @property BOOL enableAudio;
 @property(nonatomic) FlutterEventChannel *eventChannel;
 @property(nonatomic) FLTImageStreamHandler *imageStreamHandler;
 @property(nonatomic) FlutterEventSink eventSink;
 @property(readonly, nonatomic) AVCaptureSession *captureSession;
 @property(readonly, nonatomic) AVCaptureDevice *captureDevice;
-@property(readonly, nonatomic) AVCapturePhotoOutput *capturePhotoOutput;
+@property(readonly, nonatomic) AVCapturePhotoOutput *capturePhotoOutput API_AVAILABLE(ios(10));
 @property(readonly, nonatomic) AVCaptureVideoDataOutput *captureVideoOutput;
 @property(readonly, nonatomic) AVCaptureInput *captureVideoInput;
 @property(readonly) CVPixelBufferRef volatile latestPixelBuffer;
@@ -192,6 +187,7 @@ static ResolutionPreset getResolutionPresetForString(NSString *preset) {
 @property(assign, nonatomic) CMTime audioTimeOffset;
 @property(nonatomic) CMMotionManager *motionManager;
 @property AVAssetWriterInputPixelBufferAdaptor *videoAdaptor;
+<<<<<<< HEAD
 - (instancetype)initWithCameraName:(NSString *)cameraName
                   resolutionPreset:(NSString *)resolutionPreset
                        enableAudio:(BOOL)enableAudio
@@ -207,6 +203,8 @@ static ResolutionPreset getResolutionPresetForString(NSString *preset) {
 - (void)stopImageStream;
 - (void)captureToFile:(NSString *)filename result:(FlutterResult)result;
 - (void)zoom:(NSUInteger *)step;
+=======
+>>>>>>> upstream/master
 @end
 
 @implementation FLTCam {
@@ -258,9 +256,12 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   [_captureSession addInputWithNoConnections:_captureVideoInput];
   [_captureSession addOutputWithNoConnections:_captureVideoOutput];
   [_captureSession addConnection:connection];
-  _capturePhotoOutput = [AVCapturePhotoOutput new];
-  [_capturePhotoOutput setHighResolutionCaptureEnabled:YES];
-  [_captureSession addOutput:_capturePhotoOutput];
+
+  if (@available(iOS 10.0, *)) {
+    _capturePhotoOutput = [AVCapturePhotoOutput new];
+    [_capturePhotoOutput setHighResolutionCaptureEnabled:YES];
+    [_captureSession addOutput:_capturePhotoOutput];
+  }
   _motionManager = [[CMMotionManager alloc] init];
   [_motionManager startAccelerometerUpdates];
 
@@ -276,6 +277,7 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   [_captureSession stopRunning];
 }
 
+<<<<<<< HEAD
 - (void)zoom:(NSUInteger *)step {
   _zoom += step;
 
@@ -290,6 +292,9 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
 }
 
 - (void)captureToFile:(NSString *)path result:(FlutterResult)result {
+=======
+- (void)captureToFile:(NSString *)path result:(FlutterResult)result API_AVAILABLE(ios(10)) {
+>>>>>>> upstream/master
   AVCapturePhotoSettings *settings = [AVCapturePhotoSettings photoSettings];
   if (_resolutionPreset == max) {
     [settings setHighResolutionPhotoEnabled:YES];
@@ -305,17 +310,19 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
 - (void)setCaptureSessionPreset:(ResolutionPreset)resolutionPreset {
   switch (resolutionPreset) {
     case max:
+    case ultraHigh:
+      if (@available(iOS 9.0, *)) {
+        if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {
+          _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
+          _previewSize = CGSizeMake(3840, 2160);
+          break;
+        }
+      }
       if ([_captureSession canSetSessionPreset:AVCaptureSessionPresetHigh]) {
         _captureSession.sessionPreset = AVCaptureSessionPresetHigh;
         _previewSize =
             CGSizeMake(_captureDevice.activeFormat.highResolutionStillImageDimensions.width,
                        _captureDevice.activeFormat.highResolutionStillImageDimensions.height);
-        break;
-      }
-    case ultraHigh:
-      if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {
-        _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
-        _previewSize = CGSizeMake(3840, 2160);
         break;
       }
     case veryHigh:
@@ -512,7 +519,7 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   }
 }
 
-- (CMSampleBufferRef)adjustTime:(CMSampleBufferRef)sample by:(CMTime)offset {
+- (CMSampleBufferRef)adjustTime:(CMSampleBufferRef)sample by:(CMTime)offset CF_RETURNS_RETAINED {
   CMItemCount count;
   CMSampleBufferGetSampleTimingInfoArray(sample, 0, nil, &count);
   CMSampleTimingInfo *pInfo = malloc(sizeof(CMSampleTimingInfo) * count);
@@ -818,33 +825,37 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
 
 - (void)handleMethodCallAsync:(FlutterMethodCall *)call result:(FlutterResult)result {
   if ([@"availableCameras" isEqualToString:call.method]) {
-    AVCaptureDeviceDiscoverySession *discoverySession = [AVCaptureDeviceDiscoverySession
-        discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeBuiltInWideAngleCamera ]
-                              mediaType:AVMediaTypeVideo
-                               position:AVCaptureDevicePositionUnspecified];
-    NSArray<AVCaptureDevice *> *devices = discoverySession.devices;
-    NSMutableArray<NSDictionary<NSString *, NSObject *> *> *reply =
-        [[NSMutableArray alloc] initWithCapacity:devices.count];
-    for (AVCaptureDevice *device in devices) {
-      NSString *lensFacing;
-      switch ([device position]) {
-        case AVCaptureDevicePositionBack:
-          lensFacing = @"back";
-          break;
-        case AVCaptureDevicePositionFront:
-          lensFacing = @"front";
-          break;
-        case AVCaptureDevicePositionUnspecified:
-          lensFacing = @"external";
-          break;
+    if (@available(iOS 10.0, *)) {
+      AVCaptureDeviceDiscoverySession *discoverySession = [AVCaptureDeviceDiscoverySession
+          discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeBuiltInWideAngleCamera ]
+                                mediaType:AVMediaTypeVideo
+                                 position:AVCaptureDevicePositionUnspecified];
+      NSArray<AVCaptureDevice *> *devices = discoverySession.devices;
+      NSMutableArray<NSDictionary<NSString *, NSObject *> *> *reply =
+          [[NSMutableArray alloc] initWithCapacity:devices.count];
+      for (AVCaptureDevice *device in devices) {
+        NSString *lensFacing;
+        switch ([device position]) {
+          case AVCaptureDevicePositionBack:
+            lensFacing = @"back";
+            break;
+          case AVCaptureDevicePositionFront:
+            lensFacing = @"front";
+            break;
+          case AVCaptureDevicePositionUnspecified:
+            lensFacing = @"external";
+            break;
+        }
+        [reply addObject:@{
+          @"name" : [device uniqueID],
+          @"lensFacing" : lensFacing,
+          @"sensorOrientation" : @90,
+        }];
       }
-      [reply addObject:@{
-        @"name" : [device uniqueID],
-        @"lensFacing" : lensFacing,
-        @"sensorOrientation" : @90,
-      }];
+      result(reply);
+    } else {
+      result(FlutterMethodNotImplemented);
     }
-    result(reply);
   } else if ([@"initialize" isEqualToString:call.method]) {
     NSString *cameraName = call.arguments[@"cameraName"];
     NSString *resolutionPreset = call.arguments[@"resolutionPreset"];
@@ -863,8 +874,9 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
       }
       int64_t textureId = [_registry registerTexture:cam];
       _camera = cam;
+      __weak CameraPlugin *weakSelf = self;
       cam.onFrameAvailable = ^{
-        [_registry textureFrameAvailable:textureId];
+        [weakSelf.registry textureFrameAvailable:textureId];
       };
       FlutterEventChannel *eventChannel = [FlutterEventChannel
           eventChannelWithName:[NSString
@@ -907,9 +919,12 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   } else {
     NSDictionary *argsMap = call.arguments;
     NSUInteger textureId = ((NSNumber *)argsMap[@"textureId"]).unsignedIntegerValue;
-
     if ([@"takePicture" isEqualToString:call.method]) {
-      [_camera captureToFile:call.arguments[@"path"] result:result];
+      if (@available(iOS 10.0, *)) {
+        [_camera captureToFile:call.arguments[@"path"] result:result];
+      } else {
+        result(FlutterMethodNotImplemented);
+      }
     } else if ([@"dispose" isEqualToString:call.method]) {
       [_registry unregisterTexture:textureId];
       [_camera close];
