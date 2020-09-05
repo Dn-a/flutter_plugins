@@ -10,13 +10,10 @@ dependencies:
   video_player: ^0.10.0
   integration_test:
     path: ../../integration_test
-<<<<<<< HEAD
 
   permission_handler: "^5.0.1+1"
   path: "^1.7.0"
   path_provider: "^1.6.11"
-=======
->>>>>>> upstream/master
 
 dev_dependencies:
   flutter_test:

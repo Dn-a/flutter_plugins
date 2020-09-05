@@ -292,7 +292,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     }
     controller = CameraController(
       cameraDescription,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.max,
       enableAudio: enableAudio,
     );
 
